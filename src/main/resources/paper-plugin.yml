@@ -1,0 +1,8 @@
+name: CustomFoods
+version: '1.0-SNAPSHOT'
+main: me.lebogo.customFoods.CustomFoods
+api-version: '1.21'
+prefix: CustomFoods
+authors: [ LeBogo ]
+description: Adds tools to add custom foods to your server!
+website: https://lebogo.me
