@@ -2,15 +2,16 @@ package me.lebogo.customFoods.commands;
 
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
-import me.lebogo.customFoods.CustomFoods;
 import me.lebogo.customFoods.CustomFood;
+import me.lebogo.customFoods.CustomFoods;
 import me.lebogo.customFoods.FoodManager;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.*;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jspecify.annotations.Nullable;
 
@@ -94,30 +95,27 @@ public class FoodCommand implements BasicCommand {
 
                 // check next arg if it is shapeless or shaped
                 if (args.length < 4) {
-                    // TODO - Add support for shaped recipes
-                    CustomFoods.sendErrorMessage(sender, "Usage: /food edit " + args[1] + " crafting shapeless");
+                    CustomFoods.sendErrorMessage(sender, "Usage: /food edit " + args[1] + " crafting <recipe|type>");
                     return;
                 }
 
-                // TODO - Add support for shaped recipes
-                if (!args[3].equalsIgnoreCase("shapeless") /*&& !args[3].equalsIgnoreCase("shaped")*/) {
-                    CustomFoods.sendErrorMessage(sender, "Invalid crafting type: " + args[3]);
+                if (!args[3].equalsIgnoreCase("recipe") && !args[3].equalsIgnoreCase("type")) {
+                    CustomFoods.sendErrorMessage(sender, "Invalid crafting option: " + args[3]);
                     return;
                 }
 
-                Component recipeTypeText = CustomFoods.SHAPED_RECIPE_TEXT;
-                if (args[3].equalsIgnoreCase("shapeless")) {
-                    recipeTypeText = CustomFoods.SHAPELESS_RECIPE_TEXT;
+                if (args[3].equalsIgnoreCase("type")) {
+                    food.getCustomRecipe().setRecipeType(args[4]);
+                    food.registerRecipe();
+                    foodManager.saveFoods();
+                    CustomFoods.sendSuccessMessage(sender, "Recipe type for " + food.getName() + " set to " + args[4]);
+                    return;
                 }
 
-                Inventory recipeInventory = player.getServer().createInventory(player, InventoryType.DISPENSER, Component.textOfChildren(recipeTypeText, Component.text(" for "), Component.text(food.getName())));
-                if (args[3].equalsIgnoreCase("shapeless") && food.getRecipe() instanceof ShapelessRecipe shapelessRecipe) {
-                    int index = 0;
-                    for (RecipeChoice recipeChoice : shapelessRecipe.getChoiceList()) {
-                        if (!(recipeChoice instanceof RecipeChoice.ExactChoice exactChoice)) continue;
-                        recipeInventory.setItem(index++, exactChoice.getItemStack());
-                        System.out.println(index);
-                    }
+                Inventory recipeInventory = player.getServer().createInventory(player, InventoryType.DISPENSER, Component.textOfChildren(CustomFoods.EDIT_RECIPE_TEXT, Component.text(" for "), Component.text(food.getName())));
+                ItemStack[] ingredients = food.getCustomRecipe().getIngredients();
+                for (int i = 0; i < ingredients.length; i++) {
+                    recipeInventory.setItem(i, ingredients[i]);
                 }
 
                 player.openInventory(recipeInventory);
@@ -136,6 +134,8 @@ public class FoodCommand implements BasicCommand {
                 }
 
                 food.setItemStack(itemInMainHand.clone());
+                food.getCustomRecipe().setOutput(food.getItemStack());
+
                 foodManager.saveFoods();
 
                 food.registerRecipe();
@@ -291,11 +291,20 @@ public class FoodCommand implements BasicCommand {
         }
 
         if (args.length == 4 && args[0].equals("edit") && args[2].equals("crafting")) {
-            // TODO - Add support for shaped recipes
-            List<String> suggestions = List.of("shapeless");
+            List<String> suggestions = List.of("type", "recipe");
 
             for (String suggestion : suggestions) {
                 if (suggestion.startsWith(args[3])) {
+                    finalSuggestions.add(suggestion);
+                }
+            }
+        }
+
+        if (args.length == 5 && args[0].equals("edit") && args[2].equals("crafting") && args[3].equals("type")) {
+            List<String> suggestions = List.of("shaped", "shapeless");
+
+            for (String suggestion : suggestions) {
+                if (suggestion.startsWith(args[4])) {
                     finalSuggestions.add(suggestion);
                 }
             }

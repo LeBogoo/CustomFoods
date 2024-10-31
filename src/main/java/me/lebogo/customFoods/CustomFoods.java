@@ -13,13 +13,13 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class CustomFoods extends JavaPlugin {
-    public static final Component SHAPED_RECIPE_TEXT = Component.text("Shaped Recipe");
-    public static final Component SHAPELESS_RECIPE_TEXT = Component.text("Shapeless Recipe");
+    public static final Component EDIT_RECIPE_TEXT = Component.text("Edit Recipe");
 
 
     public static CustomFoods instance;
 
     static {
+        ConfigurationSerialization.registerClass(CustomCraftingRecipe.class, "CustomCraftingRecipe");
         ConfigurationSerialization.registerClass(CustomFood.class, "CustomFood");
     }
 
